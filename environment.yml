@@ -1,0 +1,13 @@
+# You can use this file to create a conda environment for this pipeline:
+#   conda env create -f environment.yml
+name: dolphinnext
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - r-base=4.2.2
+  - pandoc=2.19.2
+  - r-rmarkdown=2.18
+  - r-biocmanager=1.30.19
+  - r-devtools=2.4.5

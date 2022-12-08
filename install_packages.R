@@ -5,7 +5,7 @@ new.pkg <- pkg[!(pkg %in% installed.packages()[, 'Package'])]
   sapply(pkg, require, character.only = TRUE)
 }
 
-packages <- c('BiocManager',  'rmarkdown', 'devtools', 'curl', 'httr', 'Seurat', 'SingleCellExperiment', 'xml2', 'tidyverse', 'dplyr', 'Matrix', 'scales', 'RCurl', 'svglite')
+packages <- c('curl', 'httr', 'Seurat', 'SingleCellExperiment', 'xml2', 'tidyverse', 'dplyr', 'Matrix', 'scales', 'RCurl', 'svglite')
 inst_pack(packages)
 
 devtools::install_github("mojaveazure/seurat-disk", upgrade = "always")

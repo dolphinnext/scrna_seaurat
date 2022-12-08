@@ -17,7 +17,12 @@ RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86
     echo "conda activate base" >> ~/.bashrc
 
 COPY environment.yml /
-RUN conda env create -f /environment.yml && conda clean -a
+RUN . /opt/conda/etc/profile.d/conda.sh && \ 
+    conda activate base && \
+    conda update conda && \
+    conda install -c conda-forge mamba && \
+    mamba env create -f /environment.yml && \
+    mamba clean -a
 
 RUN mkdir -p /project /nl /mnt /share /pi
 ENV PATH /opt/conda/envs/dolphinnext/bin:$PATH
