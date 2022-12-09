@@ -409,15 +409,15 @@ output:
 
 # libraries
 library(Seurat)
-library(SeuratDisk)
+library(anndata)
 
 # read data
 seurat_obj <- readRDS("${seurat_obj}")
 
 # save h5ad file
 seu_name <- gsub(".rds","","${seurat_obj}")
-SaveH5Seurat(seurat_obj, filename = paste0(seu_name,".h5seurat"), overwrite = TRUE)
-Convert(paste0(seu_name,".h5seurat"), dest = "h5ad", overwrite = TRUE)
+write_h5ad(seurat_obj, paste0(seu_name,".h5ad"))
+
 """
 }
 
