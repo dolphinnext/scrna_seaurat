@@ -281,40 +281,44 @@ if(ncol(seurat_obj) > ${numCells}){
 	# Determine the K-nearest neighbor graph
 	seurat_obj <- FindNeighbors(object = seurat_obj, 
 	                                   dims = 1:20)
-	
+	#res <- c(0.4,0.6,0.8,1.0,1.4)
+	res <- c(0.4, 0.6)
 	# Determine the clusters for various resolutions                                
 	seurat_obj <- FindClusters(object = seurat_obj,
-	                                  resolution = c(0.4, 0.6, 0.8, 1.0, 1.4))
-	
+	                                  resolution = res)
 	
 	# UMAP
 	seurat_obj <- RunUMAP(seurat_obj, dims = 1:20, verbose = FALSE)
 	
-	# Visualize UMAP
-	g1 <- DimPlot(seurat_obj, reduction = "umap", label = TRUE, pt.size = 1, group.by  = "RNA_snn_res.0.4") + 
-		labs(title = "UMAP Clustering (Resolution 0.4)")
-	g2 <- DimPlot(seurat_obj, reduction = "umap", label = TRUE, pt.size = 1, group.by  = "RNA_snn_res.0.6") + 
-		labs(title = "UMAP Clustering (Resolution 0.6)")
-	g3 <- DimPlot(seurat_obj, reduction = "umap", label = TRUE, pt.size = 1, group.by  = "RNA_snn_res.0.8") + 
-		labs(title = "UMAP Clustering (Resolution 0.8)")
-	g4 <- DimPlot(seurat_obj, reduction = "umap", label = TRUE, pt.size = 1, group.by  = "RNA_snn_res.1") + 
-		labs(title = "UMAP Clustering (Resolution 1.0)")
-	g5 <- DimPlot(seurat_obj, reduction = "umap", label = TRUE, pt.size = 1, group.by  = "RNA_snn_res.1.4") + 
-		labs(title = "UMAP Clustering (Resolution 1.4)")
-	g1 + g2 + g3 + g4 + g5
-	ggsave(file = paste(seurat_obj@project.name,"_umap.png", sep=""), plot = last_plot(), width = 15, height = 10)
+	# TSNE
+    seurat_obj <- RunTSNE(seurat_obj, dims = 1:20, verbose = FALSE)
+
+	# Visualize TSNE and UMAP
+	for(method in c("umap", "tsne")){
+		plot_list <- list()
+		for(i in res){
+		  plot_list[[paste0(i)]] <- DimPlot(seurat_obj, reduction = method, label = TRUE, pt.size = 1, group.by  = paste0("RNA_snn_res.",i)) + 
+			labs(title = paste0(toupper(method), " Clustering (Resolution,", i,")"))
+	    }
+	    pdf(paste0(seurat_obj@project.name,"_",method,".pdf"), width = 5, height = 5)
+	    par(mfrow = c(2,2))
+	    print(plot_list)
+	    dev.off()
+ 
+		# nCount
+		plot_list <- list()
+		plot_list[[method]] <- FeaturePlot(seurat_obj, features="nCount_RNA", reduction = method) + 
+			labs(title = paste0(toupper(method), " UMI Counts")) + 
+			scale_colour_gradientn(colours = CustomPalette(low = "blue", high = "red", mid = "green", k = 100))
+		pdf(paste0(seurat_obj@project.name,"_",method,"_umi.pdf"), width = 5, height = 5)
+	    par(mfrow = c(2,2))
+	    print(plot_list)
+	    dev.off()
+    }
 	
-	
-	# nCount
-	FeaturePlot(seurat_obj, features="nCount_RNA", reduction = "umap") + 
-		labs(title = "UMAP UMI Counts") + 
-		scale_colour_gradientn(colours = CustomPalette(low = "blue", high = "red", mid = "green", k = 100))
-	ggsave(file = paste(seurat_obj@project.name,"_umi.png", sep=""), plot = last_plot(), width = 5, height = 5)
-	
-	
-	# marker tables 
+	# marker tables
 	markers_res_list <- list()
-	for(i in c(0.4,0.6,0.8,1.0,1.4)){
+	for(i in res){
 		Idents(seurat_obj) <- paste0("RNA_snn_res.",i)
 		try({
 			markers <- FindAllMarkers(seurat_obj)
@@ -338,55 +342,26 @@ if(ncol(seurat_obj) > ${numCells}){
 	    })
 	}
 	
+    plot_list <- list()
+    plot_heatmap <- list()
+	for(i in res){
 	try({
-		markers <- markers_res_list[["0.4"]] 
+		markers <- markers_res_list[[paste0(i)]] 
 		top_cluster_markers <- as_tibble(markers) %>% group_by(cluster) %>% slice_max(avg_log2FC, n = 12)
-		DoHeatmap(seurat_obj, features = top_cluster_markers\$gene, group.by = "RNA_snn_res.0.4") + NoLegend()
-		ggsave(file = paste(seurat_obj@project.name,"_Heatmap_res.0.4.png", sep=""), plot = last_plot(), width = 8, height = 8)
+		plot_heatmap[[paste0(i)]] <- DoHeatmap(seurat_obj, features = top_cluster_markers\$gene, group.by = paste0("RNA_snn_res.",i)) + NoLegend()
+		plot_list[[paste0(i)]] <- RidgePlot(seurat_obj,features = "nCount_RNA", group.by=paste0("RNA_snn_res.",i)) + 
+		   labs(title = paste0("UMI Density of Clusters (resolution ",i,")")) + ylab(label = "Clusters")
 	})
-	
-	try({
-		markers <- markers_res_list[["0.6"]] 
-		top_cluster_markers <- as_tibble(markers) %>% group_by(cluster) %>% slice_max(avg_log2FC, n = 12)
-		DoHeatmap(seurat_obj, features = top_cluster_markers\$gene, group.by = "RNA_snn_res.0.6") + NoLegend()
-		ggsave(file = paste(seurat_obj@project.name,"_Heatmap_res.0.6.png", sep=""), plot = last_plot(), width = 8, height = 8)
-	})
-	
-	try({
-		markers <- markers_res_list[["0.8"]] 
-		top_cluster_markers <- as_tibble(markers) %>% group_by(cluster) %>% slice_max(avg_log2FC, n = 12)
-		DoHeatmap(seurat_obj, features = top_cluster_markers\$gene, group.by = "RNA_snn_res.0.8") + NoLegend()
-		ggsave(file = paste(seurat_obj@project.name,"_Heatmap_res.0.8.png", sep=""), plot = last_plot(), width = 8, height = 8)
-	})
-	
-	try({
-		markers <- markers_res_list[["1"]] 
-		top_cluster_markers <- as_tibble(markers) %>% group_by(cluster) %>% slice_max(avg_log2FC, n = 12)
-		DoHeatmap(seurat_obj, features = top_cluster_markers\$gene, group.by = "RNA_snn_res.1") + NoLegend()
-		ggsave(file = paste(seurat_obj@project.name,"_Heatmap_res.1.png", sep=""), plot = last_plot(), width = 8, height = 8)
-	})
-	
-	try({
-		markers <- markers_res_list[["1.4"]] 
-		top_cluster_markers <- as_tibble(markers) %>% group_by(cluster) %>% slice_max(avg_log2FC, n = 12)
-		DoHeatmap(seurat_obj, features = top_cluster_markers\$gene, group.by = "RNA_snn_res.1.4") + NoLegend()
-		ggsave(file = paste(seurat_obj@project.name,"_Heatmap_res.1.4.png", sep=""), plot = last_plot(), width = 8, height = 8)
-	})
-	
-	# RidgePlot of UMI counts
-	g1 <- RidgePlot(seurat_obj,features = "nCount_RNA", group.by ="RNA_snn_res.0.4") + 
-		  labs(title = "UMI Density of Clusters (resolution 0.4)") + ylab(label = "Clusters")
-	g2 <- RidgePlot(seurat_obj,features = "nCount_RNA", group.by ="RNA_snn_res.0.6") + 
-		  labs(title = "UMI Density of Clusters (resolution 0.6)") + ylab(label = "Clusters")
-	g3 <- RidgePlot(seurat_obj,features = "nCount_RNA", group.by ="RNA_snn_res.0.8") + 
-		  labs(title = "UMI Density of Clusters (resolution 0.8)") + ylab(label = "Clusters")
-	g4 <- RidgePlot(seurat_obj,features = "nCount_RNA", group.by ="RNA_snn_res.1") + 
-		  labs(title = "UMI Density of Clusters (resolution 1.0)") + ylab(label = "Clusters")
-	g5 <- RidgePlot(seurat_obj,features = "nCount_RNA", group.by ="RNA_snn_res.1.4") + 
-		  labs(title = "UMI Density of Clusters (resolution 1.4)") + ylab(label = "Clusters")
-	g1 + g2 + g3 + g4 + g5
-	ggsave(file = paste(seurat_obj@project.name,"_UMIdensity.png", sep=""), plot = last_plot(), width = 15, height = 10)
-
+	}
+	for(i in res){
+	    pdf(paste0(seurat_obj@project.name,"_Heatmap.pdf"), width = 8, height = 5)
+	    print(plot_heatmap)
+	    dev.off()
+	    pdf(paste0(seurat_obj@project.name,"_UMIdensity.pdf"), width = 8, height = 5)
+	    par(mfrow = c(2,2))
+	    print(plot_list)
+	    dev.off()
+     }
 }
 
 # saveRDS

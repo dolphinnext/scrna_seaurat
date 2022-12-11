@@ -4,6 +4,7 @@ name: dolphinnext
 channels:
   - conda-forge
   - bioconda
+  - csdms-stack
   - defaults
 dependencies:
   - r-base=4.2.2
@@ -11,3 +12,4 @@ dependencies:
   - r-rmarkdown=2.18
   - r-biocmanager=1.30.19
   - r-devtools=2.4.5
+  - szip=2.1.1
