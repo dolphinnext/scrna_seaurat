@@ -5,7 +5,8 @@ new.pkg <- pkg[!(pkg %in% installed.packages()[, 'Package'])]
   sapply(pkg, require, character.only = TRUE)
 }
 
-packages <- c('curl', 'httr', 'Seurat', 'anndata', 'xml2', 'tidyverse', 'dplyr', 'Matrix', 'scales', 'RCurl', 'svglite')
+packages <- c('curl', 'httr', 'Seurat', 'anndata', 'xml2', 'tidyverse', 'dplyr', 'Matrix', 'scales', 'RCurl', 'svglite', 'patchwork', 'readr', 'ggpubr', 'DT')
 inst_pack(packages)
 
-BiocManager::install("SingleCellExperiment")
+BiocManager::install(c("SingleCellExperiment", "zellkonverter", "limma", "UCell", "scuttle", "SingleR", "celldex", "DT"))
+devtools::install_github("mojaveazure/seurat-disk", upgrade = "always")
